@@ -8,10 +8,7 @@ module "dynamodb" {
   project_name = var.project_name
 }
 
-module "cognito" {
-  source       = "./modules/cognito"
-  project_name = var.project_name
-}
+
 
 module "lambda" {
   source                = "./modules/lambda"
@@ -27,4 +24,10 @@ module "apigateway" {
   signup_lambda_arn = module.lambda.signup_lambda_arn
   login_lambda_arn  = module.lambda.login_lambda_arn
   confirm_lambda_arn = module.lambda.confirm_lambda_arn
+}
+module "cognito" {
+  source                       = "./modules/cognito"
+  project_name                 = var.project_name
+  pre_signup_lambda_arn       = module.lambda.pre_signup_lambda_arn
+  post_confirmation_lambda_arn = module.lambda.post_confirmation_lambda_arn
 }

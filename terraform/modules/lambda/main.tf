@@ -54,3 +54,25 @@ resource "aws_lambda_function" "confirm" {
 
   source_code_hash = filebase64sha256(abspath("${path.module}/../../../lambda/confirm.zip"))
 }
+resource "aws_lambda_function" "pre_signup" {
+  function_name = "${var.project_name}-pre-signup"
+  filename      = "${path.root}/lambda/pre_signup.zip"
+  handler       = "pre_signup.lambda_handler"
+  runtime       = "python3.9"
+  role          = var.lambda_exec_role_arn
+  source_code_hash = filebase64sha256("${path.root}/lambda/pre_signup.zip")
+}
+
+resource "aws_lambda_function" "post_confirmation" {
+  function_name = "${var.project_name}-post-confirmation"
+  filename      = "${path.root}/lambda/post_confirmation.zip"
+  handler       = "post_confirmation.lambda_handler"
+  runtime       = "python3.9"
+  role          = var.lambda_exec_role_arn
+  environment {
+    variables = {
+      USER_POOL_ID = var.cognito_user_pool_id
+    }
+  }
+  source_code_hash = filebase64sha256("${path.root}/lambda/post_confirmation.zip")
+}

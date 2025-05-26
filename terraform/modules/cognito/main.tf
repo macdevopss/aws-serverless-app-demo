@@ -19,16 +19,9 @@ resource "aws_cognito_user_pool" "main" {
       priority = 1
     }
   }
-}
 
-resource "aws_cognito_user_pool_client" "main" {
-  name            = "${var.project_name}-app-client"
-  user_pool_id    = aws_cognito_user_pool.main.id
-  generate_secret = false
-
-  explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_USER_SRP_AUTH"
-  ]
+  lambda_config {
+    pre_sign_up        = var.pre_signup_lambda_arn
+    post_confirmation  = var.post_confirmation_lambda_arn
+  }
 }
