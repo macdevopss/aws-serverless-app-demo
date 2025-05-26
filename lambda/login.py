@@ -4,28 +4,34 @@ import json
 
 client = boto3.client('cognito-idp')
 
-USER_POOL_ID = os.environ.get('USER_POOL_ID')
 CLIENT_ID = os.environ.get('CLIENT_ID')
 
 def lambda_handler(event, context):
-    body = json.loads(event['body'])
+    print("Event received:", event)
 
     try:
+        body = json.loads(event['body'])
+        email = body['email']
+        password = body['password']
+
         response = client.initiate_auth(
             AuthFlow='USER_PASSWORD_AUTH',
             AuthParameters={
-                'USERNAME': body['email'],
-                'PASSWORD': body['password']
+                'USERNAME': email,
+                'PASSWORD': password
             },
             ClientId=CLIENT_ID
         )
 
+        print("Login successful:", response)
+
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'access_token': response['AuthenticationResult']['AccessToken'],
-                'refresh_token': response['AuthenticationResult']['RefreshToken'],
+                'message': 'Login successful',
                 'id_token': response['AuthenticationResult']['IdToken'],
+                'access_token': response['AuthenticationResult']['AccessToken'],
+                'refresh_token': response['AuthenticationResult']['RefreshToken']
             })
         }
 
@@ -38,10 +44,11 @@ def lambda_handler(event, context):
     except client.exceptions.UserNotConfirmedException:
         return {
             'statusCode': 403,
-            'body': json.dumps({'message': 'User not confirmed'})
+            'body': json.dumps({'message': 'User not confirmed. Please verify your email.'})
         }
 
     except Exception as e:
+        print("Error:", str(e))
         return {
             'statusCode': 500,
             'body': json.dumps({'message': str(e)})

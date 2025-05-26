@@ -12,10 +12,10 @@ module "cognito" {
   project_name = var.project_name
 }
 module "lambda" {
-  source               = "./modules/lambda"
-  project_name         = var.project_name
-  lambda_exec_role_arn = module.iam.lambda_role_arn
-  cognito_user_pool_id = module.cognito.user_pool_id
+  source                = "./modules/lambda"
+  project_name          = var.project_name
+  lambda_exec_role_arn  = module.iam.lambda_role_arn
+  cognito_user_pool_id  = module.cognito.user_pool_id
   cognito_app_client_id = module.cognito.app_client_id
 }
 module "apigateway" {
