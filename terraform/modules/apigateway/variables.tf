@@ -1,11 +1,20 @@
 variable "project_name" {
-  type = string
+  description = "Proje adı prefix"
+  type        = string
 }
 
 variable "signup_lambda_arn" {
-  type = string
+  description = "Signup Lambda fonksiyonunun ARN değeri"
+  type        = string
 }
 
 variable "login_lambda_arn" {
-  type = string
+  description = "Login Lambda fonksiyonunun ARN değeri"
+  type        = string
+}
+
+variable "confirm_lambda_arn" {
+  description = "Confirm Lambda fonksiyonunun ARN değeri"
+  type        = string
+  default     = null
 }

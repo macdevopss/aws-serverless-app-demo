@@ -35,9 +35,10 @@ resource "aws_lambda_function" "login" {
 
   source_code_hash = filebase64sha256(abspath("${path.module}/../../../lambda/login.zip"))
 }
+
 resource "aws_lambda_function" "confirm" {
   function_name = "${var.project_name}-confirm"
-  filename      = "${path.root}/lambda/confirm.zip"
+  filename      = abspath("${path.module}/../../../lambda/confirm.zip")
   handler       = "confirm.lambda_handler"
   runtime       = "python3.9"
   role          = var.lambda_exec_role_arn
@@ -51,5 +52,5 @@ resource "aws_lambda_function" "confirm" {
     }
   }
 
-  source_code_hash = filebase64sha256("${path.root}/lambda/confirm.zip")
+  source_code_hash = filebase64sha256(abspath("${path.module}/../../../lambda/confirm.zip"))
 }

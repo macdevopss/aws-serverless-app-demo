@@ -5,11 +5,11 @@ resource "aws_iam_role" "lambda_exec_role" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
           Service = "lambda.amazonaws.com"
-        }
+        },
+        Action = "sts:AssumeRole"
       }
     ]
   })
@@ -17,18 +17,28 @@ resource "aws_iam_role" "lambda_exec_role" {
 
 resource "aws_iam_policy" "lambda_basic_policy" {
   name        = "${var.project_name}-lambda-basic-policy"
-  description = "CloudWatch Logs for Lambda"
-  
+  description = "Basic Lambda execution policy with CloudWatch Logs and Cognito access"
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
+        Effect = "Allow",
         Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Effect   = "Allow",
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "cognito-idp:SignUp",
+          "cognito-idp:AdminConfirmSignUp",
+          "cognito-idp:InitiateAuth",
+          "cognito-idp:ConfirmSignUp"
+        ],
         Resource = "*"
       }
     ]
@@ -38,11 +48,4 @@ resource "aws_iam_policy" "lambda_basic_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_logs_attach" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.lambda_basic_policy.arn
-}
-resource "aws_lambda_permission" "apigw_invoke_confirm" {
-  statement_id  = "AllowAPIGatewayInvokeConfirm"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda.aws_lambda_function.confirm.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${module.apigateway.aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
