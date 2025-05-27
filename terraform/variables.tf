@@ -1,11 +1,14 @@
 variable "aws_region" {
-  description = "AWS bölgesi"
   type        = string
-  default     = "us-east-1"
+  description = "AWS region"
 }
 
 variable "project_name" {
-  description = "Proje adı prefix"
   type        = string
-  default     = "fiverr-demo"
+  description = "Project name prefix for all resources"
+}
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment (e.g., dev, prod)"
 }

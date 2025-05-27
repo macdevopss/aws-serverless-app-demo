@@ -1,14 +1,9 @@
 variable "project_name" {
-  description = "Proje adı prefix"
   type        = string
+  description = "Project name used in resource naming"
 }
 
-variable "pre_signup_lambda_arn" {
-  description = "Pre SignUp trigger için Lambda ARN"
+variable "environment" {
   type        = string
-}
-
-variable "post_confirmation_lambda_arn" {
-  description = "Post Confirmation trigger için Lambda ARN"
-  type        = string
+  description = "Deployment environment name (e.g., dev, staging, prod)"
 }

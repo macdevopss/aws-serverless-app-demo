@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CI/CD Pipeline for Serverless Application with Terraform and Lambda
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    Default: your-github-username
+    Description: GitHub kullanıcı adı
+  GitHubRepo:
+    Type: String
+    Default: aws-serverless-app-demo
+    Description: GitHub repository ismi
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: Branch ismi
+  GitHubToken:
+    Type: String
+    Description: GitHub Token (personal access token)
+    NoEcho: true
+
+Resources:
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PipelinePermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  ArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-artifact-store"
+
+  ServerlessAppPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactStoreBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHub_Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubToken
+              RunOrder: 1
+
+        - Name: Deploy
+          Actions:
+            - Name: Terraform_Apply
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                ProjectName: terraform-deploy
+              RunOrder: 1
+
+  TerraformDeployProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: terraform-deploy
+      Source:
+        Type: CODEPIPELINE
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: AWS_REGION
+            Value: !Ref AWS::Region
+      ServiceRole: !GetAtt PipelineRole.Arn
+      BuildSpec: |
+        version: 0.2
+        phases:
+          install:
+            commands:
+              - apt-get update && apt-get install -y unzip
+              - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+              - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+              - apt-get update && apt-get install terraform -y
+              - terraform --version
+          pre_build:
+            commands:
+              - cd terraform
+              - terraform init
+              - terraform validate
+          build:
+            commands:
+              - terraform apply -auto-approve
+
+Outputs:
+  PipelineURL:
+    Description: "AWS CodePipeline URL"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${ServerlessAppPipeline}/view"

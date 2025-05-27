@@ -1,45 +1,61 @@
+import json
 import boto3
 import os
-import json
 
 client = boto3.client('cognito-idp')
-
-USER_POOL_ID = os.environ.get('USER_POOL_ID')
 CLIENT_ID = os.environ.get('CLIENT_ID')
 
 def lambda_handler(event, context):
-    print("Event received:", event)
-
     try:
-        body = json.loads(event['body'])
-        print("Parsed body:", body)
+        body = get_json_body(event)
+        email = body['email']
+        code = body['code']
 
         response = client.confirm_sign_up(
             ClientId=CLIENT_ID,
-            Username=body['email'],
-            ConfirmationCode=body['code']
+            Username=email,
+            ConfirmationCode=code
         )
 
-        print("Confirmation response:", response)
-
-        return {
-            'statusCode': 200,
-            'body': json.dumps({'message': 'User confirmed successfully'})
-        }
-
+        return success_response({"message": "User confirmed successfully"})
+    except client.exceptions.UserNotFoundException:
+        return error_response("User not found", 404)
     except client.exceptions.CodeMismatchException:
-        return {
-            'statusCode': 400,
-            'body': json.dumps({'message': 'Invalid confirmation code'})
-        }
+        return error_response("Invalid confirmation code", 400)
     except client.exceptions.ExpiredCodeException:
-        return {
-            'statusCode': 400,
-            'body': json.dumps({'message': 'Confirmation code expired'})
-        }
+        return error_response("Confirmation code expired", 410)
     except Exception as e:
-        print("Error occurred:", str(e))
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'message': str(e)})
-        }
+        return error_response(str(e), 500)
+
+def get_json_body(event):
+    body = event.get('body')
+    if body is None:
+        raise ValueError("Request body is missing")
+
+    if isinstance(body, str):
+        return json.loads(body)
+    elif isinstance(body, dict):
+        return body
+    else:
+        raise ValueError("Unsupported body format")
+
+def success_response(body):
+    return {
+        "statusCode": 200,
+        "headers": cors_headers(),
+        "body": json.dumps(body)
+    }
+
+def error_response(message, status_code):
+    return {
+        "statusCode": status_code,
+        "headers": cors_headers(),
+        "body": json.dumps({"error": message})
+    }
+
+def cors_headers():
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "*"
+    }

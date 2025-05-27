@@ -1,23 +1,16 @@
-resource "aws_cognito_user_group" "admin_group" {
-  user_pool_id = var.user_pool_id
-  name         = "admin"
-  description  = "Admin group"
+locals {
+  cognito_groups = {
+    admin    = { description = "Administratoren", precedence = 1 }
+    vendor   = { description = "Lieferanten",    precedence = 2 }
+    customer = { description = "Kunden",         precedence = 3 }
+    driver   = { description = "Fahrer",         precedence = 4 }
+  }
 }
 
-resource "aws_cognito_user_group" "vendor_group" {
-  user_pool_id = var.user_pool_id
-  name         = "vendor"
-  description  = "Vendor group"
-}
-
-resource "aws_cognito_user_group" "customer_group" {
-  user_pool_id = var.user_pool_id
-  name         = "customer"
-  description  = "Customer group"
-}
-
-resource "aws_cognito_user_group" "driver_group" {
-  user_pool_id = var.user_pool_id
-  name         = "driver"
-  description  = "Driver group"
+resource "aws_cognito_user_group" "groups" {
+  for_each     = local.cognito_groups
+  user_pool_id = aws_cognito_user_pool.main.id
+  name         = each.key
+  description  = each.value.description
+  precedence   = each.value.precedence
 }

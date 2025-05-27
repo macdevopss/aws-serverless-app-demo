@@ -1,20 +1,19 @@
 variable "project_name" {
-  description = "Proje adı prefix"
   type        = string
+  description = "Project name used to name API Gateway and logs"
 }
 
 variable "signup_lambda_arn" {
-  description = "Signup Lambda fonksiyonunun ARN değeri"
   type        = string
+  description = "Invoke ARN of the signup Lambda function"
 }
 
 variable "login_lambda_arn" {
-  description = "Login Lambda fonksiyonunun ARN değeri"
   type        = string
+  description = "Invoke ARN of the login Lambda function"
 }
 
 variable "confirm_lambda_arn" {
-  description = "Confirm Lambda fonksiyonunun ARN değeri"
   type        = string
-  default     = null
+  description = "Invoke ARN of the confirm Lambda function"
 }

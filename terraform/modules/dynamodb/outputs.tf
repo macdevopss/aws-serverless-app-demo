@@ -1,9 +1,9 @@
-output "dynamodb_table_name" {
-  description = "DynamoDB tablo adı"
+output "users_table_name" {
   value       = aws_dynamodb_table.users.name
+  description = "The name of the DynamoDB users table"
 }
 
-output "dynamodb_table_arn" {
-  description = "DynamoDB tablo ARN değeri"
+output "users_table_arn" {
   value       = aws_dynamodb_table.users.arn
+  description = "The ARN of the DynamoDB users table"
 }

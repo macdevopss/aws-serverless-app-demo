@@ -1,24 +1,25 @@
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "${var.project_name}-lambda-exec-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
+data "aws_iam_policy_document" "assume_lambda" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
 }
 
-resource "aws_iam_policy" "lambda_basic_policy" {
-  name        = "${var.project_name}-lambda-basic-policy"
-  description = "Basic Lambda execution policy with CloudWatch Logs and Cognito access"
+resource "aws_iam_role" "lambda_exec" {
+  name               = "${var.project_name}-lambda-exec"
+  assume_role_policy = data.aws_iam_policy_document.assume_lambda.json
 
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_policy" "lambda_policy" {
+  name   = "${var.project_name}-lambda-policy"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -29,15 +30,27 @@ resource "aws_iam_policy" "lambda_basic_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",
+          "dynamodb:Scan"
+        ],
         Resource = "*"
       },
       {
         Effect = "Allow",
         Action = [
-          "cognito-idp:SignUp",
+          "cognito-idp:AdminAddUserToGroup",
           "cognito-idp:AdminConfirmSignUp",
-          "cognito-idp:InitiateAuth",
-          "cognito-idp:ConfirmSignUp"
+          "cognito-idp:AdminInitiateAuth",
+          "cognito-idp:AdminRespondToAuthChallenge",
+          "cognito-idp:SignUp"
         ],
         Resource = "*"
       }
@@ -45,7 +58,7 @@ resource "aws_iam_policy" "lambda_basic_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_logs_attach" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = aws_iam_policy.lambda_basic_policy.arn
+resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.lambda_policy.arn
 }
