@@ -1,6 +1,13 @@
 resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-user-pool"
 
+  schema {
+    name                     = "custom:role"
+    attribute_data_type      = "String"
+    mutable                  = true
+    required                 = false
+  }
+
   password_policy {
     minimum_length    = 8
     require_lowercase = true
@@ -9,8 +16,8 @@ resource "aws_cognito_user_pool" "main" {
     require_uppercase = true
   }
 
-  mfa_configuration = "OFF"
-  auto_verified_attributes = ["email"]
+  mfa_configuration         = "OFF"
+  auto_verified_attributes  = ["email"]
 
   tags = {
     Environment = var.environment
