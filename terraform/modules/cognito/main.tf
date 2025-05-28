@@ -25,6 +25,7 @@ resource "aws_cognito_user_pool" "main" {
   }
 }
 
+
 resource "aws_cognito_user_pool_client" "main" {
   name            = "${var.project_name}-user-client"
   user_pool_id    = aws_cognito_user_pool.main.id
